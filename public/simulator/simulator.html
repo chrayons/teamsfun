@@ -850,17 +850,31 @@ globals = {};
 
   // Pre-orient paper face-on to the camera so it looks flat/upright
   // before any fold or tilt animation begins.
-  (function() {
-    var mw = globals.threeView.modelWrapper;
-    var camDir = globals.threeView.camera.position.clone().normalize();
-    var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), camDir);
-    var e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
-    mw.rotation.set(e.x, e.y, e.z);
-  })();
+  faceCameraFlat(globals.threeView.modelWrapper, globals.threeView.camera);
 
   // tell parent we're ready
   parent.postMessage({ type: 'simulator:ready' }, '*');
 })();
+
+// ── Orientation helper ──────────────────────────────────────────────────────
+// Orients modelWrapper so the paper faces the camera flat and upright.
+// Unlike setFromUnitVectors(Y, camDir) which only fixes the normal direction
+// (leaving roll undefined), this builds a full 3-axis basis from the camera's
+// own right/up/forward, eliminating the ~270° roll artifact.
+// Paper axes after this call:
+//   local X → camera right  (matches SVG +X = rightward)
+//   local Y → toward camera (paper normal faces viewer)
+//   local Z → camera down   (matches SVG +Y = downward, so +Z goes down the page)
+function faceCameraFlat(mw, cam) {
+  cam.updateMatrixWorld();
+  var toCamera = cam.position.clone().normalize();
+  var camUp = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+  var paperRight = new THREE.Vector3().crossVectors(camUp, toCamera).normalize();
+  // cross(right, normal) = down (camera-down) — right-handed, matches SVG +Y = downward
+  var paperDown = new THREE.Vector3().crossVectors(paperRight, toCamera);
+  var m4 = new THREE.Matrix4().makeBasis(paperRight, toCamera, paperDown);
+  mw.setRotationFromMatrix(m4);
+}
 
 // ── Message API ────────────────────────────────────────────────────────────
 window.addEventListener('message', function(e) {
@@ -910,10 +924,7 @@ window.addEventListener('message', function(e) {
     // Snap model to face the camera directly — paper looks flat/upright like
     // the screen it just captured, rather than already sitting at an angle.
     var mw = globals.threeView.modelWrapper;
-    var camDir = globals.threeView.camera.position.clone().normalize();
-    var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), camDir);
-    var flatEuler = new THREE.Euler().setFromQuaternion(q, 'XYZ');
-    mw.rotation.set(flatEuler.x, flatEuler.y, flatEuler.z);
+    faceCameraFlat(mw, globals.threeView.camera);
 
     // Animate from face-on to the fold-start viewing angle, then begin fold.
     var sRX = mw.rotation.x, sRY = mw.rotation.y, sRZ = mw.rotation.z;
@@ -980,7 +991,7 @@ function applyTexture(dataURL) {
   for (var i = 0; i < nodes.length; i++) {
     var op = nodes[i].getOriginalPosition();
     uvArray[2 * i]     = (op.x - minX) / rangeX;
-    uvArray[2 * i + 1] = (op.z - minZ) / rangeZ;
+    uvArray[2 * i + 1] = (maxZ - op.z) / rangeZ; // invert: SVG +Z goes down, V=1 must be top of image
   }
   geometry.addAttribute('uv', new THREE.BufferAttribute(uvArray, 2));
   console.log('[tex] UV range x:[' + minX.toFixed(3) + ',' + maxX.toFixed(3) + '] z:[' + minZ.toFixed(3) + ',' + maxZ.toFixed(3) + ']');
