@@ -988,7 +988,7 @@ function waitForSettle() {
     if (Date.now() - start < SETTLE_MS) { requestAnimationFrame(check); return; }
     globals.simulationRunning = false;
     var mw = globals.threeView.modelWrapper;
-    var tRX = -0.3, tRY = -0.3, tRZ = 1.3;
+    var tRX = -0.3, tRY = 5, tRZ = -1.3;
     var sRX = mw.rotation.x, sRY = mw.rotation.y, sRZ = mw.rotation.z;
     var animStart = Date.now(), animDur = 600;
     function rotateTo() {
