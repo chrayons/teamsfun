@@ -1,412 +1,359 @@
 import React, { forwardRef } from 'react'
 
-function AvatarPlaceholder({ size, initials }) {
+// Fluent / Teams brand colours
+const C = {
+  purple:      '#5B5FC7',
+  purpleLight: '#7579EB',
+  purpleDark:  '#4B53BC',
+  purpleText:  '#5B5FC7',
+  bg:          '#F5F5F5',
+  surface:     '#FFFFFF',
+  surfaceAlt:  '#FAFAFA',
+  text:        '#242424',
+  text2:       '#505050',
+  textSub:     '#616161',
+  textMuted:   '#8A8886',
+  border:      '#E0E0E0',
+  borderDark:  '#C8C6C4',
+  borderBar:   '#E9E9E9',
+}
+
+function Avatar({ size, initials }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" style={{ borderRadius: '50%', flexShrink: 0 }}>
-      <circle cx="20" cy="20" r="20" fill="#6264a7" />
-      <text x="20" y="25" textAnchor="middle" fill="white" fontSize="14" fontFamily="-apple-system,sans-serif" fontWeight="600">
-        {initials}
-      </text>
-    </svg>
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: `linear-gradient(135deg, ${C.purpleLight}, ${C.purpleDark})`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0, overflow: 'hidden',
+    }}>
+      <span style={{
+        color: 'white',
+        fontSize: size * 0.38,
+        fontWeight: 600,
+        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        letterSpacing: '0.5px',
+      }}>{initials}</span>
+    </div>
+  )
+}
+
+// Fluent-style toggle — matches 40×20px Teams join screen toggle
+function Toggle({ on }) {
+  return (
+    <div style={{
+      width: 40, height: 20,
+      borderRadius: 10,
+      background: on ? C.purple : 'transparent',
+      border: on ? 'none' : `1px solid #605E5C`,
+      position: 'relative',
+      flexShrink: 0,
+      boxSizing: 'border-box',
+    }}>
+      <div style={{
+        width: 14, height: 14,
+        borderRadius: '50%',
+        background: on ? 'white' : '#605E5C',
+        position: 'absolute',
+        top: on ? 3 : 2,
+        left: on ? 23 : 3,
+      }}/>
+    </div>
+  )
+}
+
+function AudioRadio({ label, selected, dimmed }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      {/* radio circle */}
+      <div style={{ flexShrink: 0 }}>
+        <div style={{
+          width: 20, height: 20, borderRadius: '50%',
+          border: `1.3px solid ${selected ? C.purple : dimmed ? '#C7C7C7' : C.textSub}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: selected ? C.purple : 'transparent',
+          boxSizing: 'border-box',
+        }}>
+          {selected && (
+            <img src="/icons/radio-dot.svg" alt="" width={12} height={12}/>
+          )}
+        </div>
+      </div>
+      <span style={{
+        fontSize: 14, fontWeight: selected ? 600 : 400,
+        fontFamily: "'Segoe UI', system-ui, sans-serif",
+        color: selected ? '#505050' : dimmed ? '#C7C7C7' : C.textSub,
+      }}>
+        {label}
+      </span>
+    </div>
   )
 }
 
 const JoinScreen = forwardRef(function JoinScreen({ onJoin }, ref) {
   return (
-    <div ref={ref} style={styles.root}>
-      {/* title bar */}
-      <div style={styles.titleBar}>
-        <div style={styles.trafficLights}>
-          <span style={{ ...styles.dot, background: '#ff5f56' }} />
-          <span style={{ ...styles.dot, background: '#ffbd2e' }} />
-          <span style={{ ...styles.dot, background: '#27c93f' }} />
+    <div ref={ref} style={s.root}>
+      {/* macOS title bar */}
+      <div style={s.titleBar}>
+        <div style={s.trafficLights}>
+          <span style={{ ...s.dot, background: '#FF5F57' }}/>
+          <span style={{ ...s.dot, background: '#FEBC2E' }}/>
+          <span style={{ ...s.dot, background: '#28C840' }}/>
         </div>
-        <span style={styles.titleText}>Meeting with Christina Lu</span>
-        <span style={styles.ellipsis}>···</span>
+        <span style={s.titleText}>Meeting with Reve x Design Meetup</span>
+        <span style={s.ellipsis}>···</span>
       </div>
 
-      {/* content */}
-      <div style={styles.body}>
-        {/* identity card */}
-        <div style={styles.identityCard}>
-          <AvatarPlaceholder size={36} initials="CL" />
-          <div style={styles.identityInfo}>
-            <span style={styles.identityName}>Christina Lu</span>
-            <span style={styles.identityEmail}>christina.tn.lu@gma…</span>
+      {/* identity card — sits just below title bar, centered */}
+      <div style={s.identityWrap}>
+        <div style={s.identityCard}>
+          <Avatar size={38} initials="TF"/>
+          <div style={s.identityInfo}>
+            <span style={s.identityName}>TeamsFun</span>
+            <span style={s.identityEmail}>teamsfun@gma…</span>
           </div>
-          <button style={styles.changeBtn}>Change</button>
+          <button style={s.changeBtn}>Change</button>
+        </div>
+      </div>
+
+      {/* scrollable body */}
+      <div style={s.body}>
+
+        {/* Teams logo + meeting title */}
+        <div style={s.meetingHeader}>
+          <img src="/icons/teams-logo.png" alt="Teams" style={{ width: 38, height: 40, objectFit: 'contain' }}/>
+          <h2 style={s.meetingTitle}>Meeting with TeamsFun</h2>
         </div>
 
-        {/* Teams logo + meeting name */}
-        <div style={styles.meetingHeader}>
-          <TeamsIcon />
-          <h2 style={styles.meetingTitle}>Meeting with Christina Lu</h2>
-        </div>
+        {/* two-column content */}
+        <div style={s.columns}>
 
-        {/* two-column layout */}
-        <div style={styles.columns}>
-          {/* left: camera preview */}
-          <div style={styles.cameraPanel}>
-            <div style={styles.cameraPreview}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-                <path d="M21 7.5L15 12l6 4.5V7.5Z" fill="#888"/>
-                <rect x="3" y="6" width="13" height="12" rx="2" fill="#888"/>
-                <line x1="2" y1="2" x2="22" y2="22" stroke="#888" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <p style={styles.cameraOffText}>Your camera is turned off</p>
+          {/* ── Camera panel ── */}
+          <div style={s.cameraPanel}>
+            <div style={s.cameraPreview}>
+              <img src="/icons/camera-off-lg.svg" alt="" width={24} height={24} style={{ display: 'block' }}/>
+              <p style={s.cameraOffText}>Your camera is turned off</p>
             </div>
-            <div style={styles.cameraControls}>
-              <div style={styles.cameraLeft}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                  <path d="M21 7.5L15 12l6 4.5V7.5Z" fill="#555"/>
-                  <rect x="3" y="6" width="13" height="12" rx="2" fill="#555"/>
-                  <line x1="2" y1="2" x2="22" y2="22" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="#555" style={{ marginLeft: 2 }}>
-                  <path d="M7 10l5 5 5-5H7z"/>
-                </svg>
-                <div style={styles.toggleTrack}>
-                  <div style={styles.toggleThumb} />
-                </div>
+            <div style={s.cameraControls}>
+              <div style={s.cameraLeft}>
+                <img src="/icons/camera-off-sm.svg" alt="" width={20} height={20} style={{ display: 'block' }}/>
+                <img src="/icons/chevron-gray.svg" alt="" width={13} height={13} style={{ display: 'block' }}/>
+                <Toggle on={false}/>
               </div>
-              <span style={styles.bgFilters}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ marginRight: 6 }}>
-                  <circle cx="12" cy="12" r="3" stroke="#888" strokeWidth="2"/>
-                  <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke="#888" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                Background filters
+              <span style={s.bgFiltersBtn}>
+                <img src="/icons/bg-filter.svg" alt="" width={20} height={20} style={{ display: 'block' }}/>
+                <span style={{ marginLeft: 4 }}>Background filters</span>
               </span>
             </div>
           </div>
 
-          {/* right: audio settings */}
-          <div style={styles.audioPanel}>
-            <AudioOption label="Computer audio" selected />
-            <div style={styles.audioDivider} />
-            <div style={styles.deviceRow}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3Z" stroke="#555" strokeWidth="2"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="12" y1="19" x2="12" y2="23" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
-                <line x1="8" y1="23" x2="16" y2="23" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <span style={styles.deviceLabel}>MacBook Pro Microphone</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#555"><path d="M7 10l5 5 5-5H7z"/></svg>
-              <div style={{ ...styles.toggleTrack, marginLeft: 'auto', background: '#6264a7' }}>
-                <div style={{ ...styles.toggleThumb, left: 18 }} />
+          {/* ── Audio panel ── */}
+          <div style={s.audioPanel}>
+            {/* Computer audio section — white top card */}
+            <div style={s.audioTopCard}>
+              <AudioRadio label="Computer audio" selected/>
+            </div>
+
+            {/* Device rows — gray bg */}
+            <div style={s.deviceSection}>
+              <div style={s.deviceRow}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 19 }}>
+                  <img src="/icons/mic-off-gray.svg" alt="" width={25} height={25} style={{ display: 'block' }}/>
+                  <span style={s.deviceLabel}>MacBook Pro Microphone</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <img src="/icons/chevron-gray.svg" alt="" width={13} height={13} style={{ display: 'block' }}/>
+                  <Toggle on={false}/>
+                </div>
+              </div>
+              <div style={s.deviceRow}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 19 }}>
+                  <img src="/icons/speaker.svg" alt="" width={24} height={24} style={{ display: 'block' }}/>
+                  <span style={s.deviceLabel}>MacBook Pro Speakers</span>
+                </div>
+                <img src="/icons/chevron-gray.svg" alt="" width={13} height={13} style={{ display: 'block' }}/>
               </div>
             </div>
-            <div style={styles.deviceRow}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" stroke="#555" strokeWidth="2" strokeLinejoin="round"/>
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="#555" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-              <span style={styles.deviceLabel}>MacBook Pro Speakers</span>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="#555"><path d="M7 10l5 5 5-5H7z"/></svg>
+
+            {/* Phone audio — separate white card */}
+            <div style={s.audioOptionCard}>
+              <AudioRadio label="Phone audio" dimmed/>
             </div>
-            <div style={styles.audioDivider} />
-            <AudioOption label="Phone audio" />
-            <div style={styles.audioDivider} />
-            <AudioOption label="Don't use audio" />
+
+            {/* Don't use audio — separate white card */}
+            <div style={s.audioOptionCard}>
+              <AudioRadio label="Don't use audio"/>
+            </div>
           </div>
         </div>
 
-        {/* footer */}
-        <div style={styles.footer}>
-          <a href="#" style={styles.helpLink}>Need help?</a>
-          <div style={styles.footerButtons}>
-            <button style={styles.cancelBtn}>Cancel</button>
-            <button style={styles.joinBtn} onClick={onJoin}>Join now</button>
-          </div>
+        {/* action buttons – right-aligned */}
+        <div style={s.actionsRow}>
+          <button style={s.cancelBtn}>Cancel</button>
+          <button style={s.joinBtn} onClick={onJoin}>Join now</button>
+        </div>
+
+        {/* need help – bottom-center */}
+        <div style={s.helpRow}>
+          <a href="#" style={s.helpLink}>Need help?</a>
         </div>
       </div>
     </div>
   )
 })
 
-function AudioOption({ label, selected }) {
-  return (
-    <div style={styles.audioOption}>
-      <div style={{
-        ...styles.radioOuter,
-        borderColor: selected ? '#6264a7' : '#999',
-      }}>
-        {selected && <div style={styles.radioInner} />}
-      </div>
-      <span style={styles.audioLabel}>{label}</span>
-    </div>
-  )
-}
-
-function TeamsIcon() {
-  return (
-    <svg width="44" height="44" viewBox="0 0 44 44" fill="none" style={{ marginBottom: 8 }}>
-      <circle cx="28" cy="14" r="8" fill="#5059c9"/>
-      <circle cx="28" cy="14" r="5" fill="white"/>
-      <text x="26" y="18" fontFamily="sans-serif" fontSize="8" fill="#5059c9" fontWeight="bold">T</text>
-      <circle cx="18" cy="18" r="10" fill="#6264a7"/>
-      <text x="13" y="23" fontFamily="sans-serif" fontSize="12" fill="white" fontWeight="bold">T</text>
-    </svg>
-  )
-}
-
-const styles = {
+const s = {
   root: {
-    width: '100%',
-    height: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    background: '#f5f5f5',
+    width: '100%', height: '100vh',
+    display: 'flex', flexDirection: 'column',
+    background: C.bg,
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
     userSelect: 'none',
   },
   titleBar: {
-    height: 44,
-    display: 'flex',
-    alignItems: 'center',
+    height: 44, flexShrink: 0,
+    display: 'flex', alignItems: 'center',
     padding: '0 16px',
-    background: '#f5f5f5',
+    background: C.bg,
+    borderBottom: `1px solid ${C.borderBar}`,
     position: 'relative',
-    flexShrink: 0,
   },
-  trafficLights: {
-    display: 'flex',
-    gap: 7,
-    alignItems: 'center',
-  },
-  dot: {
-    width: 12,
-    height: 12,
-    borderRadius: '50%',
-    display: 'inline-block',
-  },
+  trafficLights: { display: 'flex', gap: 7, alignItems: 'center' },
+  dot: { width: 12, height: 12, borderRadius: '50%', display: 'inline-block' },
   titleText: {
-    position: 'absolute',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    fontSize: 13,
-    color: '#222',
-    fontWeight: 500,
+    marginLeft: 32,
+    fontSize: 13, color: C.text, fontWeight: 500,
   },
-  ellipsis: {
-    marginLeft: 'auto',
-    color: '#888',
-    fontSize: 16,
-    letterSpacing: 2,
-  },
-  body: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '0 32px 32px',
-    overflowY: 'auto',
+  ellipsis: { marginLeft: 'auto', color: C.textMuted, fontSize: 16, letterSpacing: 2 },
+
+  identityWrap: {
+    display: 'flex', justifyContent: 'center',
+    paddingTop: 0, flexShrink: 0,
   },
   identityCard: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    padding: '10px 16px',
-    background: 'white',
-    borderRadius: 8,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.10)',
-    marginBottom: 24,
-    marginTop: 8,
-    alignSelf: 'center',
-    minWidth: 280,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: '50%',
-    objectFit: 'cover',
-  },
-  identityInfo: {
-    display: 'flex',
-    flexDirection: 'column',
-    flex: 1,
-  },
-  identityName: {
-    fontSize: 13,
-    fontWeight: 600,
-    color: '#111',
-  },
-  identityEmail: {
-    fontSize: 11,
-    color: '#666',
-  },
-  changeBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#6264a7',
-    fontSize: 13,
-    fontWeight: 500,
-    cursor: 'pointer',
-    padding: 0,
-  },
-  meetingHeader: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  meetingTitle: {
-    fontSize: 20,
-    fontWeight: 600,
-    color: '#111',
-  },
-  columns: {
-    display: 'flex',
-    gap: 12,
-    width: '100%',
-    maxWidth: 820,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  cameraPanel: {
-    flex: 1,
-    background: 'white',
-    borderRadius: 8,
-    overflow: 'hidden',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  cameraPreview: {
-    flex: 1,
-    minHeight: 220,
-    background: '#f0f0f0',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  cameraOffText: {
-    fontSize: 13,
-    color: '#555',
-  },
-  cameraControls: {
-    display: 'flex',
-    alignItems: 'center',
+    display: 'flex', alignItems: 'center', gap: 10,
     padding: '10px 14px',
-    borderTop: '1px solid #eee',
-    gap: 12,
+    background: C.surface,
+    borderRadius: '0 0 8px 8px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.10)',
+    width: 290,
   },
-  cameraLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 4,
+  identityInfo: { display: 'flex', flexDirection: 'column', flex: 1 },
+  identityName: { fontSize: 13, fontWeight: 600, color: C.text },
+  identityEmail: { fontSize: 11, color: C.textSub, marginTop: 1 },
+  changeBtn: {
+    background: 'none', border: 'none',
+    color: C.purpleText, fontSize: 13, fontWeight: 500, cursor: 'pointer', padding: 0,
   },
-  toggleTrack: {
-    width: 36,
-    height: 20,
-    background: '#ccc',
-    borderRadius: 10,
-    position: 'relative',
-    cursor: 'pointer',
-  },
-  toggleThumb: {
-    width: 16,
-    height: 16,
-    background: 'white',
-    borderRadius: '50%',
-    position: 'absolute',
-    top: 2,
-    left: 2,
-    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-  },
-  bgFilters: {
-    display: 'flex',
-    alignItems: 'center',
-    fontSize: 12,
-    color: '#888',
-    marginLeft: 8,
-  },
-  audioPanel: {
+
+  body: {
     flex: 1,
-    background: 'white',
-    borderRadius: 8,
-    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-    overflow: 'hidden',
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    padding: '0 32px 0',
+    overflowY: 'auto',
   },
-  audioOption: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: '14px 18px',
+
+  meetingHeader: {
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    marginTop: 36, marginBottom: 40, gap: 24,
   },
-  radioOuter: {
-    width: 18,
-    height: 18,
-    borderRadius: '50%',
-    border: '2px solid #999',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+  meetingTitle: { fontSize: 22, fontWeight: 600, color: C.text, margin: 0, textAlign: 'center' },
+
+  columns: {
+    display: 'flex', gap: 12,
+    width: 908,
     flexShrink: 0,
   },
-  radioInner: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    background: '#6264a7',
+
+  cameraPanel: {
+    width: 448, flexShrink: 0,
+    background: C.surface, borderRadius: 8,
+    overflow: 'hidden',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.08)',
+    display: 'flex', flexDirection: 'column',
   },
-  audioLabel: {
-    fontSize: 14,
-    color: '#222',
+  cameraPreview: {
+    flex: 1, minHeight: 220,
+    background: C.surfaceAlt,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center', gap: 8,
   },
-  audioDivider: {
-    height: 1,
-    background: '#eee',
-    margin: '0 0',
+  cameraOffText: { fontSize: 13, fontWeight: 700, color: C.textMuted, margin: 0 },
+  cameraControls: {
+    display: 'flex', alignItems: 'center',
+    padding: '11px 16px',
+    borderTop: `1px solid ${C.border}`,
+    background: C.surface,
+    gap: 12,
+  },
+  cameraLeft: { display: 'flex', alignItems: 'center', gap: 4 },
+  bgFiltersBtn: {
+    display: 'flex', alignItems: 'center',
+    fontSize: 12, color: C.textMuted, cursor: 'pointer', marginLeft: 8,
+  },
+
+  audioPanel: {
+    width: 448, flexShrink: 0,
+    display: 'flex', flexDirection: 'column', gap: 8,
+  },
+
+  audioTopCard: {
+    background: C.surface,
+    borderRadius: '8px 8px 0 0',
+    padding: '28px 22px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.08)',
+  },
+  deviceSection: {
+    background: C.surfaceAlt,
+    borderRadius: '0 0 8px 8px',
+    padding: '24px 22px',
+    display: 'flex', flexDirection: 'column', gap: 16,
+    boxShadow: '0 1px 6px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.08)',
   },
   deviceRow: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    padding: '12px 18px',
-  },
-  deviceLabel: {
-    fontSize: 13,
-    color: '#333',
-    flex: 1,
-  },
-  footer: {
-    display: 'flex',
-    alignItems: 'center',
+    display: 'flex', alignItems: 'center',
     justifyContent: 'space-between',
-    width: '100%',
-    maxWidth: 820,
-    alignSelf: 'center',
-    marginTop: 4,
+    width: 404,
   },
-  helpLink: {
-    fontSize: 12,
-    color: '#6264a7',
-    textDecoration: 'underline',
+  deviceLabel: { fontSize: 14, color: C.text2, lineHeight: '25.3px' },
+  audioOptionCard: {
+    background: C.surface,
+    borderRadius: 8,
+    padding: '8px 22px',
+    boxShadow: '0 1px 6px rgba(0,0,0,0.1), 0 1px 4px rgba(0,0,0,0.08)',
   },
-  footerButtons: {
-    display: 'flex',
-    gap: 10,
+
+  actionsRow: {
+    display: 'flex', gap: 8, justifyContent: 'flex-end',
+    width: 908, flexShrink: 0,
+    marginTop: 24,
   },
   cancelBtn: {
-    padding: '9px 22px',
-    borderRadius: 4,
-    border: '1px solid #ccc',
-    background: 'white',
-    fontSize: 14,
-    color: '#222',
-    fontWeight: 500,
+    padding: '8px 20px', borderRadius: 4,
+    border: `1px solid ${C.borderDark}`,
+    background: C.surface,
+    fontSize: 14, color: C.text, fontWeight: 500,
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    cursor: 'pointer',
+    height: 36,
   },
   joinBtn: {
-    padding: '9px 22px',
-    borderRadius: 4,
-    background: '#6264a7',
-    color: 'white',
-    fontSize: 14,
-    fontWeight: 600,
-    boxShadow: '0 2px 6px rgba(98,100,167,0.35)',
-    transition: 'background 0.15s',
+    padding: '8px 20px', borderRadius: 4,
+    border: 'none',
+    background: C.purple,
+    color: 'white', fontSize: 14, fontWeight: 600,
+    fontFamily: "'Segoe UI', system-ui, sans-serif",
+    cursor: 'pointer',
+    boxShadow: '0 2px 6px rgba(91,95,199,0.35)',
+    height: 36,
+  },
+
+  helpRow: {
+    marginTop: 'auto', paddingBottom: 20, paddingTop: 16,
+    display: 'flex', justifyContent: 'center', width: '100%',
+  },
+  helpLink: {
+    fontSize: 12, color: C.purpleText,
+    textDecoration: 'underline', cursor: 'pointer',
   },
 }
 
