@@ -819,6 +819,16 @@ globals = {};
     globals.threeView.onWindowResize();
   });
 
+  // Pre-orient paper face-on to the camera so it looks flat/upright
+  // before any fold or tilt animation begins.
+  (function() {
+    var mw = globals.threeView.modelWrapper;
+    var camDir = globals.threeView.camera.position.clone().normalize();
+    var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), camDir);
+    var e = new THREE.Euler().setFromQuaternion(q, 'XYZ');
+    mw.rotation.set(e.x, e.y, e.z);
+  })();
+
   // tell parent we're ready
   parent.postMessage({ type: 'simulator:ready' }, '*');
 })();
@@ -860,8 +870,34 @@ window.addEventListener('message', function(e) {
     var foldSpeed = msg.speed != null ? msg.speed : 1.0;
     globals.setCreasePercent(0);
     globals.shouldChangeCreasePercent = true;
-    globals.simulationRunning = true;
-    startFoldAnimation(foldSpeed);
+
+    // Snap model to face the camera directly — paper looks flat/upright like
+    // the screen it just captured, rather than already sitting at an angle.
+    var mw = globals.threeView.modelWrapper;
+    var camDir = globals.threeView.camera.position.clone().normalize();
+    var q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), camDir);
+    var flatEuler = new THREE.Euler().setFromQuaternion(q, 'XYZ');
+    mw.rotation.set(flatEuler.x, flatEuler.y, flatEuler.z);
+
+    // Animate from face-on to the fold-start viewing angle, then begin fold.
+    var sRX = mw.rotation.x, sRY = mw.rotation.y, sRZ = mw.rotation.z;
+    var tRX = -0.3, tRY = 0.8, tRZ = 0;
+    var tiltStart = Date.now(), tiltDur = 1400;
+    function easeInOutCubicPre(t) { return -(Math.cos(Math.PI * t) - 1) / 2; }
+    function tiltToFoldStart() {
+      var t = Math.min((Date.now() - tiltStart) / tiltDur, 1);
+      var te = easeInOutCubicPre(t);
+      mw.rotation.x = sRX + te * (tRX - sRX);
+      mw.rotation.y = sRY + te * (tRY - sRY);
+      mw.rotation.z = sRZ + te * (tRZ - sRZ);
+      if (t < 1) {
+        requestAnimationFrame(tiltToFoldStart);
+      } else {
+        globals.simulationRunning = true;
+        startFoldAnimation(foldSpeed);
+      }
+    }
+    requestAnimationFrame(tiltToFoldStart);
   }
 
   // Direct slider control: parent sends { type:'setFoldPercent', value:0..1 }
@@ -982,7 +1018,7 @@ function startFoldAnimation(speed) {
 }
 
 function waitForSettle() {
-  var SETTLE_MS = 1000; // wait for physics to catch up to final crease angle
+  var SETTLE_MS = 300; // brief physics pause before rotation begins
   var start = Date.now();
   function check() {
     if (Date.now() - start < SETTLE_MS) { requestAnimationFrame(check); return; }
@@ -990,10 +1026,13 @@ function waitForSettle() {
     var mw = globals.threeView.modelWrapper;
     var tRX = -0.3, tRY = 5, tRZ = -1.3;
     var sRX = mw.rotation.x, sRY = mw.rotation.y, sRZ = mw.rotation.z;
-    var animStart = Date.now(), animDur = 600;
+    var animStart = Date.now(), animDur = 1400;
+    function easeInOutCubic(t) {
+      return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
     function rotateTo() {
       var t = Math.min((Date.now() - animStart) / animDur, 1);
-      var te = 1 - Math.pow(1 - t, 3);
+      var te = easeInOutCubic(t);
       mw.rotation.x = sRX + te * (tRX - sRX);
       mw.rotation.y = sRY + te * (tRY - sRY);
       mw.rotation.z = sRZ + te * (tRZ - sRZ);
