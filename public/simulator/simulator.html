@@ -808,6 +808,35 @@ globals = {};
   // as pure UI display; we don't need the full controls module
   globals.controls = { setDeltaT: function() {}, updateCreasePercent: function() {} };
 
+  // ── Drop shadow setup ──────────────────────────────────────────────────────
+  globals.threeView.renderer.shadowMap.enabled = true;
+  globals.threeView.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // Low-intensity light whose sole purpose is casting the shadow
+  var shadowLight = new THREE.DirectionalLight(0xffffff, 0.01);
+  shadowLight.position.set(1.5, 6, 2.5);
+  shadowLight.castShadow = true;
+  shadowLight.shadow.mapSize.width  = 2048;
+  shadowLight.shadow.mapSize.height = 2048;
+  shadowLight.shadow.camera.near   = 1;
+  shadowLight.shadow.camera.far    = 20;
+  shadowLight.shadow.camera.left   = -1.5;
+  shadowLight.shadow.camera.right  =  1.5;
+  shadowLight.shadow.camera.top    =  1.5;
+  shadowLight.shadow.camera.bottom = -1.5;
+  shadowLight.shadow.radius = 8; // PCFSoft blur radius
+  globals.threeView.scene.add(shadowLight);
+
+  // Invisible plane that only renders the received shadow
+  var shadowPlane = new THREE.Mesh(
+    new THREE.PlaneGeometry(8, 8),
+    new THREE.ShadowMaterial({ opacity: 0.11 })
+  );
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -0.25;
+  shadowPlane.receiveShadow = true;
+  globals.threeView.scene.add(shadowPlane);
+
   // keep model flat until startFold is received
   globals.simulationRunning = false;
 
@@ -851,6 +880,9 @@ window.addEventListener('message', function(e) {
     (function pollReady() {
       var nodes = globals.model.getNodes();
       if (nodes.length > 0 && !globals.needsSync && !globals.simNeedsSync) {
+        var m = globals.model.getMesh();
+        m[0].castShadow = true;
+        m[1].castShadow = true;
         parent.postMessage({ type: 'simulator:craneLoaded' }, '*');
       } else if (Date.now() - pollStart > 5000) {
         parent.postMessage({ type: 'simulator:craneLoaded' }, '*'); // fallback
@@ -863,6 +895,10 @@ window.addEventListener('message', function(e) {
   if (msg.type === 'applyTexture') {
     // msg.dataURL — square screenshot as data URL
     applyTexture(msg.dataURL);
+    // re-assert castShadow after material swap in applyTexture
+    var m = globals.model.getMesh();
+    m[0].castShadow = true;
+    m[1].castShadow = true;
   }
 
   if (msg.type === 'startFold') {
