@@ -21,17 +21,6 @@ The crane is gone. The meeting has started.
 
 ---
 
-## How to run
-
-```bash
-npm install
-npm run dev
-```
-
-Then open `http://localhost:5173`.
-
----
-
 ## Tech stack
 
 | Layer | Tool |
