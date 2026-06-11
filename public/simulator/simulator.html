@@ -973,7 +973,6 @@ function applyTexture(dataURL) {
     console.warn('[tex] applyTexture: nodes not ready');
     return;
   }
-  console.log('[tex] nodes ready:', nodes.length);
 
   var geometry = globals.model.getGeometry();
 
@@ -994,26 +993,14 @@ function applyTexture(dataURL) {
     uvArray[2 * i + 1] = (maxZ - op.z) / rangeZ; // invert: SVG +Z goes down, V=1 must be top of image
   }
   geometry.addAttribute('uv', new THREE.BufferAttribute(uvArray, 2));
-  console.log('[tex] UV range x:[' + minX.toFixed(3) + ',' + maxX.toFixed(3) + '] z:[' + minZ.toFixed(3) + ',' + maxZ.toFixed(3) + ']');
 
-  // Grab mesh refs now so the closure in onload always has fresh pointers.
-  var mesh = globals.model.getMesh();
-
-  // STEP 1 — apply a neutral white material SYNCHRONOUSLY.
-  // If the shape turns white/gray, material-setting works.
-  // If it stays pink, something is overriding our changes elsewhere.
-  var neutralMat = new THREE.MeshBasicMaterial({ color: 0xe8e8e8, side: THREE.DoubleSide });
-  mesh[0].material = neutralMat;
-  mesh[1].material = neutralMat;
-  mesh[1].visible  = true;
+  // Hide edges — keep them hidden regardless of texture load outcome
   globals.edgesVisible = false;
   globals.model.updateEdgeVisibility();
-  console.log('[tex] STEP 1: neutral material applied synchronously');
 
-  // STEP 2 — load the screenshot and upgrade to textured material.
+  // Load texture, then reveal the mesh — mesh was hidden in pollReady to prevent grey flash
   var img = new Image();
   img.onload = function() {
-    console.log('[tex] STEP 2: image loaded', img.naturalWidth, 'x', img.naturalHeight);
     var texture = new THREE.Texture(img);
     texture.flipY       = true;
     texture.wrapS       = THREE.ClampToEdgeWrapping;
@@ -1033,10 +1020,20 @@ function applyTexture(dataURL) {
     var m = globals.model.getMesh();
     m[0].material = mat;
     m[1].material = mat;
-    console.log('[tex] STEP 2: texture material applied (Phong+flatShading)');
+    // Wait 2 rAF cycles so Three.js has rendered the textured mesh before we
+    // signal the parent — prevents a blank frame when the join screen hides.
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        parent.postMessage({ type: 'simulator:textureReady' }, '*');
+      });
+    });
   };
-  img.onerror = function(e) {
-    console.error('[tex] STEP 2: image load FAILED — staying with neutral material', e);
+  img.onerror = function() {
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() {
+        parent.postMessage({ type: 'simulator:textureReady' }, '*');
+      });
+    });
   };
   img.src = dataURL;
 }

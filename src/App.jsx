@@ -89,30 +89,30 @@ export default function App() {
     if (!joinRef.current) return
     setScene('capturing')
 
-    // If camera is on, grab a still frame directly from the video element.
-    // html2canvas renders <video> as black, so we use drawImage instead.
     const videoEl = joinRef.current.querySelector('video')
-    let canvas
+
+    // Capture the full join screen UI. html2canvas renders <video> as black,
+    // so we composite the live camera frame on top afterwards.
+    const canvas = await html2canvas(joinRef.current, {
+      useCORS: true,
+      scale: window.devicePixelRatio || 1,
+      backgroundColor: '#f5f5f5',
+      logging: false,
+    })
+
     if (videoEl && cameraOn) {
-      canvas = document.createElement('canvas')
-      canvas.width = videoEl.videoWidth || videoEl.offsetWidth
-      canvas.height = videoEl.videoHeight || videoEl.offsetHeight
+      const containerRect = joinRef.current.getBoundingClientRect()
+      const videoRect = videoEl.getBoundingClientRect()
+      const scale = window.devicePixelRatio || 1
       const ctx = canvas.getContext('2d')
-      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
-    } else {
-      canvas = await html2canvas(joinRef.current, {
-        useCORS: true,
-        scale: window.devicePixelRatio || 1,
-        backgroundColor: '#f5f5f5',
-        logging: false,
-      })
+      const x = (videoRect.left - containerRect.left) * scale
+      const y = (videoRect.top - containerRect.top) * scale
+      const w = videoRect.width * scale
+      const h = videoRect.height * scale
+      ctx.drawImage(videoEl, x, y, w, h)
     }
 
-    // Stop the join-screen stream now that we have the still — MeetingScreen opens its own
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(t => t.stop())
-      mediaStreamRef.current = null
-    }
+    // Keep the stream alive — MeetingScreen will reuse it directly so there's no camera flash on join
 
     // center-crop to square
     const size = Math.min(canvas.width, canvas.height)
@@ -158,17 +158,18 @@ export default function App() {
           transition: 'opacity 1.2s ease',
           zIndex: 1,
         }}>
-          <MeetingScreen cameraOn={cameraOn} />
+          <MeetingScreen cameraOn={cameraOn} initialStream={mediaStreamRef.current} />
         </div>
       )}
 
-      {/* Layer 2: join screen — sits above the simulator (zIndex 4) while visible
-           so the grey mesh never shows through during texture loading */}
+      {/* Layer 2: join screen — always at zIndex 4 so simulator never bleeds through;
+           fade out gives the textured paper time to paint before it's revealed */}
       <div style={{
         ...styles.layer,
         opacity: showJoin ? 1 : 0,
         pointerEvents: showJoin ? 'auto' : 'none',
-        zIndex: showJoin ? 4 : 2,
+        transition: showJoin ? 'none' : 'opacity 0.25s ease',
+        zIndex: 4,
       }}>
         <JoinScreen ref={joinRef} onJoin={handleJoin} cameraOn={cameraOn} onToggleCamera={handleToggleCamera} mediaStream={mediaStreamRef.current} />
       </div>

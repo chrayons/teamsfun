@@ -96,9 +96,9 @@ function LeaveGroup() {
   )
 }
 
-export default function MeetingScreen({ cameraOn: initialCameraOn }) {
-  const streamRef = useRef(null)
-  const [hasCamera, setHasCamera] = useState(false)
+export default function MeetingScreen({ cameraOn: initialCameraOn, initialStream }) {
+  const streamRef = useRef(initialStream || null)
+  const [hasCamera, setHasCamera] = useState(!!(initialStream && initialCameraOn))
   const [cameraActive, setCameraActive] = useState(initialCameraOn)
 
   // Callback ref: assigns stream as soon as the <video> element mounts
@@ -113,6 +113,11 @@ export default function MeetingScreen({ cameraOn: initialCameraOn }) {
         streamRef.current = null
       }
       setHasCamera(false)
+      return
+    }
+    // Reuse a stream that was handed off from the join screen (no new getUserMedia round-trip)
+    if (streamRef.current) {
+      setHasCamera(true)
       return
     }
     let active = true
