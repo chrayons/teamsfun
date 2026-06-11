@@ -7,10 +7,30 @@ import MeetingScreen from './MeetingScreen.jsx'
 export default function App() {
   const [scene, setScene] = useState('join')
   const [meetingOpacity, setMeetingOpacity] = useState(0)
+  const [cameraOn, setCameraOn] = useState(false)
   const joinRef = useRef(null)
   const iframeRef = useRef(null)
   const craneLoaded = useRef(false)
   const simReady = useRef(false)
+  const mediaStreamRef = useRef(null)
+
+  const handleToggleCamera = useCallback(async () => {
+    if (!cameraOn) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        mediaStreamRef.current = stream
+        setCameraOn(true)
+      } catch (e) {
+        console.warn('Camera access denied', e)
+      }
+    } else {
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(t => t.stop())
+        mediaStreamRef.current = null
+      }
+      setCameraOn(false)
+    }
+  }, [cameraOn])
 
   // load crane SVG once on mount
   useEffect(() => {
@@ -30,15 +50,18 @@ export default function App() {
       }
 
       if (msg.type === 'simulator:craneLoaded') {
-        // crane is built — now send the screenshot texture
+        // crane is built — send the screenshot texture; fold starts when textureReady fires
         const iframe = iframeRef.current
         if (!iframe) return
         iframe.contentWindow.postMessage({ type: 'applyTexture', dataURL: window.__screenshotDataURL }, '*')
-        // small delay so texture is applied before fold starts
-        setTimeout(() => {
-          iframe.contentWindow.postMessage({ type: 'startFold' }, '*')
-          setScene('folding')
-        }, 120)
+      }
+
+      if (msg.type === 'simulator:textureReady') {
+        // Paper is on screen — hide join screen and start fold in the same event
+        const iframe = iframeRef.current
+        if (!iframe) return
+        setScene('folding')
+        iframe.contentWindow.postMessage({ type: 'startFold' }, '*')
       }
 
       if (msg.type === 'simulator:foldComplete') {
@@ -66,13 +89,30 @@ export default function App() {
     if (!joinRef.current) return
     setScene('capturing')
 
-    // capture the join screen
-    const canvas = await html2canvas(joinRef.current, {
-      useCORS: true,
-      scale: window.devicePixelRatio || 1,
-      backgroundColor: '#f5f5f5',
-      logging: false,
-    })
+    // If camera is on, grab a still frame directly from the video element.
+    // html2canvas renders <video> as black, so we use drawImage instead.
+    const videoEl = joinRef.current.querySelector('video')
+    let canvas
+    if (videoEl && cameraOn) {
+      canvas = document.createElement('canvas')
+      canvas.width = videoEl.videoWidth || videoEl.offsetWidth
+      canvas.height = videoEl.videoHeight || videoEl.offsetHeight
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height)
+    } else {
+      canvas = await html2canvas(joinRef.current, {
+        useCORS: true,
+        scale: window.devicePixelRatio || 1,
+        backgroundColor: '#f5f5f5',
+        logging: false,
+      })
+    }
+
+    // Stop the join-screen stream now that we have the still — MeetingScreen opens its own
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach(t => t.stop())
+      mediaStreamRef.current = null
+    }
 
     // center-crop to square
     const size = Math.min(canvas.width, canvas.height)
@@ -104,7 +144,7 @@ export default function App() {
     setTimeout(tryLoad, 200)
   }, [])
 
-  const showJoin     = scene === 'join' || scene === 'capturing'
+  const showJoin     = scene === 'join' || scene === 'capturing' || scene === 'loading_sim'
   const showSim      = scene !== 'join' && scene !== 'capturing'
   const showMeeting  = scene === 'flying' || scene === 'meeting'
 
@@ -118,19 +158,19 @@ export default function App() {
           transition: 'opacity 1.2s ease',
           zIndex: 1,
         }}>
-          <MeetingScreen />
+          <MeetingScreen cameraOn={cameraOn} />
         </div>
       )}
 
-      {/* Layer 2: join screen */}
+      {/* Layer 2: join screen — sits above the simulator (zIndex 4) while visible
+           so the grey mesh never shows through during texture loading */}
       <div style={{
         ...styles.layer,
         opacity: showJoin ? 1 : 0,
         pointerEvents: showJoin ? 'auto' : 'none',
-        transition: 'opacity 0.3s ease',
-        zIndex: 2,
+        zIndex: showJoin ? 4 : 2,
       }}>
-        <JoinScreen ref={joinRef} onJoin={handleJoin} />
+        <JoinScreen ref={joinRef} onJoin={handleJoin} cameraOn={cameraOn} onToggleCamera={handleToggleCamera} mediaStream={mediaStreamRef.current} />
       </div>
 
       {/* Layer 3: origami simulator iframe (transparent bg, full viewport) */}

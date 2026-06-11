@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react'
+import React, { forwardRef, useRef, useEffect } from 'react'
 
 // Fluent / Teams brand colours
 const C = {
@@ -89,7 +89,15 @@ function AudioRadio({ label, selected, dimmed }) {
   )
 }
 
-const JoinScreen = forwardRef(function JoinScreen({ onJoin }, ref) {
+const JoinScreen = forwardRef(function JoinScreen({ onJoin, cameraOn, onToggleCamera, mediaStream }, ref) {
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = cameraOn && mediaStream ? mediaStream : null
+    }
+  }, [cameraOn, mediaStream])
+
   return (
     <div ref={ref} style={s.root}>
       {/* macOS title bar */}
@@ -130,14 +138,26 @@ const JoinScreen = forwardRef(function JoinScreen({ onJoin }, ref) {
           {/* ── Camera panel ── */}
           <div style={s.cameraPanel}>
             <div style={s.cameraPreview}>
-              <img src="/icons/camera-off-lg.svg" alt="" width={24} height={24} style={{ display: 'block' }}/>
-              <p style={s.cameraOffText}>Your camera is turned off</p>
+              {cameraOn ? (
+                <video ref={videoRef} autoPlay muted playsInline style={{
+                  position: 'absolute', inset: 0,
+                  width: '100%', height: '100%', objectFit: 'cover',
+                  display: 'block',
+                }}/>
+              ) : (
+                <>
+                  <img src="/icons/camera-off-lg.svg" alt="" width={24} height={24} style={{ display: 'block' }}/>
+                  <p style={s.cameraOffText}>Your camera is turned off</p>
+                </>
+              )}
             </div>
             <div style={s.cameraControls}>
               <div style={s.cameraLeft}>
-                <img src="/icons/camera-off-sm.svg" alt="" width={20} height={20} style={{ display: 'block' }}/>
+                <img src={cameraOn ? "/icons/video-on.svg" : "/icons/camera-off-sm.svg"} alt="" width={20} height={20} style={{ display: 'block' }}/>
                 <img src="/icons/chevron-gray.svg" alt="" width={13} height={13} style={{ display: 'block' }}/>
-                <Toggle on={false}/>
+                <div onClick={onToggleCamera} style={{ cursor: 'pointer' }}>
+                  <Toggle on={cameraOn}/>
+                </div>
               </div>
               <span style={s.bgFiltersBtn}>
                 <img src="/icons/bg-filter.svg" alt="" width={20} height={20} style={{ display: 'block' }}/>
@@ -276,6 +296,7 @@ const s = {
     background: C.surfaceAlt,
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center', gap: 8,
+    position: 'relative', overflow: 'hidden',
   },
   cameraOffText: { fontSize: 13, fontWeight: 700, color: C.textMuted, margin: 0 },
   cameraControls: {

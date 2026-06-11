@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useRef, useEffect, useState, useCallback } from 'react'
 
 const C = {
   purple:   '#5B5FC7',
@@ -50,11 +50,13 @@ function ChevronDown() {
 }
 
 // Camera group: icon+label  +  chevron
-function CameraGroup() {
+function CameraGroup({ cameraOn, onToggle }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
-      <div style={{ ...s.toolBtn, marginRight: -4 }}>
-        <div style={s.toolIcon}><Icon src="/icons/video-off.svg"/></div>
+      <div style={{ ...s.toolBtn, marginRight: -4 }} onClick={onToggle}>
+        <div style={s.toolIcon}>
+          <img src={cameraOn ? "/icons/video-on.svg" : "/icons/video-off.svg"} alt="" width={24} height={24} style={{ display: 'block' }}/>
+        </div>
         <span style={s.toolLabel}>Camera</span>
       </div>
       <ChevronDown/>
@@ -94,7 +96,46 @@ function LeaveGroup() {
   )
 }
 
-export default function MeetingScreen() {
+export default function MeetingScreen({ cameraOn: initialCameraOn }) {
+  const streamRef = useRef(null)
+  const [hasCamera, setHasCamera] = useState(false)
+  const [cameraActive, setCameraActive] = useState(initialCameraOn)
+
+  // Callback ref: assigns stream as soon as the <video> element mounts
+  const videoCallbackRef = useCallback(node => {
+    if (node && streamRef.current) node.srcObject = streamRef.current
+  }, [])
+
+  useEffect(() => {
+    if (!cameraActive) {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop())
+        streamRef.current = null
+      }
+      setHasCamera(false)
+      return
+    }
+    let active = true
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+      .then(stream => {
+        if (!active) { stream.getTracks().forEach(t => t.stop()); return }
+        streamRef.current = stream
+        setHasCamera(true)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(t => t.stop())
+        streamRef.current = null
+      }
+    }
+  }, [cameraActive])
+
+  const handleToggleCamera = useCallback(() => {
+    setCameraActive(v => !v)
+  }, [])
+
   return (
     <div style={s.root}>
       {/* macOS title bar — slightly darker per Figma */}
@@ -130,7 +171,7 @@ export default function MeetingScreen() {
 
           {/* Camera, Mic, Share sub-group — tighter gap */}
           <div style={s.camMicGroup}>
-            <CameraGroup/>
+            <CameraGroup cameraOn={hasCamera} onToggle={handleToggleCamera}/>
             <MicGroup/>
             <ToolBtn icon={<Icon src="/icons/share.svg"/>} label="Share"/>
           </div>
@@ -143,8 +184,14 @@ export default function MeetingScreen() {
 
       {/* main content */}
       <div style={s.content}>
-        <UserAvatar size={160}/>
-        <p style={s.waitingText}>Waiting for others to join…</p>
+        {hasCamera ? (
+          <video ref={videoCallbackRef} autoPlay muted playsInline style={s.cameraFeed}/>
+        ) : (
+          <>
+            <UserAvatar size={160}/>
+            <p style={s.waitingTextPlain}>Waiting for others to join…</p>
+          </>
+        )}
       </div>
     </div>
   )
@@ -214,8 +261,31 @@ const s = {
     display: 'flex', flexDirection: 'column',
     alignItems: 'center', justifyContent: 'center',
     gap: 56,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cameraFeed: {
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
+  waitingOverlay: {
+    position: 'absolute',
+    bottom: 40,
+    left: 0, right: 0,
+    display: 'flex', justifyContent: 'center',
   },
   waitingText: {
+    fontSize: 24, fontWeight: 600, color: C.text, margin: 0,
+    background: 'rgba(255,255,255,0.75)',
+    padding: '8px 20px',
+    borderRadius: 8,
+    backdropFilter: 'blur(6px)',
+  },
+  waitingTextPlain: {
     fontSize: 24, fontWeight: 600, color: C.text, margin: 0,
   },
 }
