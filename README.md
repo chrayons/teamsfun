@@ -1,16 +1,54 @@
-# React + Vite
+# Teams Origami Transition
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A concept prototype for Microsoft Teams — when you click "Join now", the entire join screen folds into an origami crane, flies across the viewport, and disappears into the meeting room.
 
-Currently, two official plugins are available:
+Most UX tries to distract you from the things you don't want to do. This explores the opposite: what if the uncomfortable moment itself became the delight? Instead of escapism, craft.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Built at the [Reve x Design Meetup Makeathon](https://luma.com/ldhaw009).
 
-## React Compiler
+---
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## What it does
 
-## Expanding the ESLint configuration
+**Scene 1 — Join screen**
+A faithful React mock of the Teams pre-meeting UI. You can toggle your camera, then hit "Join now".
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+**Scene 2 — Fold & flight**
+The join screen is captured as a screenshot and mapped as a texture onto a flat paper mesh. The mesh folds into a crane over ~3 seconds — your UI literally printed on its wings — then the crane flies diagonally across the screen and exits.
+
+**Scene 3 — Meeting room**
+The crane is gone. The meeting has started.
+
+---
+
+## How to run
+
+```bash
+npm install
+npm run dev
+```
+
+Then open `http://localhost:5173`.
+
+---
+
+## Tech stack
+
+| Layer | Tool |
+|---|---|
+| Concept & ideation | [Reve 2.0](https://app.reve.com/) |
+| UI (join + meeting screens) | React + Vite |
+| Screen capture | html2canvas |
+| Origami fold engine | [OrigamiSimulator](https://github.com/amandaghassaei/OrigamiSimulator) (Three.js / WebGL) |
+| Crane flight animation | GSAP |
+
+The fold physics are driven by Amanda Ghassaei's [OrigamiSimulator](https://github.com/amandaghassaei/OrigamiSimulator), a GPU-based origami engine built on Three.js. It runs in an embedded iframe and communicates with the React app via `postMessage`.
+
+---
+
+## Credits
+
+Concept and pitch by [Christina Lu](https://www.christina-lu.com/) and [Ivan Song](https://ivansong.webflow.io/). Prototype built by Christina Lu.
+
+- Origami fold engine — [Amanda Ghassaei](https://github.com/amandaghassaei/OrigamiSimulator) (MIT license)
+- Built with [Claude Code](https://claude.ai/code)
