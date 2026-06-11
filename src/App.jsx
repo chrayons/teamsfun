@@ -190,12 +190,7 @@ export default function App() {
         />
       </div>
 
-      {/* subtle loading indicator during capture */}
-      {scene === 'capturing' && (
-        <div style={styles.capturingOverlay}>
-          <div style={styles.capturingDot} />
-        </div>
-      )}
+
     </div>
   )
 }
@@ -219,22 +214,5 @@ const styles = {
     height: '100%',
     border: 'none',
     background: 'transparent',
-  },
-  capturingOverlay: {
-    position: 'absolute',
-    bottom: 24,
-    left: '50%',
-    transform: 'translateX(-50%)',
-    zIndex: 10,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-  },
-  capturingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: '50%',
-    background: '#6264a7',
-    animation: 'pulse 0.8s ease infinite',
   },
 }
