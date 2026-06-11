@@ -2,7 +2,7 @@
 
 A concept prototype for Microsoft Teams — when you click "Join now", the entire join screen folds into an origami crane, flies across the viewport, and disappears into the meeting room.
 
-Most UX tries to distract you from the things you don't want to do. This explores the opposite: what if the uncomfortable moment itself became the delight? Instead of escapism, craft.
+Life is full of distractions to take you away from the things you don't want to do. This explores the opposite: what if the uncomfortable moment itself became the delight? Instead of escapism, craft.
 
 Built at the [Reve x Design Meetup Makeathon](https://luma.com/ldhaw009).
 
