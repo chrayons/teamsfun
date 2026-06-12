@@ -150,7 +150,7 @@ export default function MeetingScreen({ cameraOn: initialCameraOn, initialStream
           <span style={{ ...s.dot, background: '#FEBC2E' }}/>
           <span style={{ ...s.dot, background: '#28C840' }}/>
         </div>
-        <span style={s.titleText}>Meeting with Reve x Design Meetup</span>
+        <span style={s.titleText}>Reve x Design Meetup</span>
         <span style={s.ellipsis}>···</span>
       </div>
 
