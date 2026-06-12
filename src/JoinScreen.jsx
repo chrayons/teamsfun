@@ -107,7 +107,7 @@ const JoinScreen = forwardRef(function JoinScreen({ onJoin, cameraOn, onToggleCa
           <span style={{ ...s.dot, background: '#FEBC2E' }}/>
           <span style={{ ...s.dot, background: '#28C840' }}/>
         </div>
-        <span style={s.titleText}>Meeting with Reve x Design Meetup</span>
+        <span style={s.titleText}>Reve x Design Meetup</span>
         <span style={s.ellipsis}>···</span>
       </div>
 
@@ -129,7 +129,7 @@ const JoinScreen = forwardRef(function JoinScreen({ onJoin, cameraOn, onToggleCa
         {/* Teams logo + meeting title */}
         <div style={s.meetingHeader}>
           <img src="/icons/teams-logo.png" alt="Teams" style={{ width: 38, height: 40, objectFit: 'contain' }}/>
-          <h2 style={s.meetingTitle}>Meeting with TeamsFun</h2>
+          <h2 style={s.meetingTitle}>Reve x Design Meetup</h2>
         </div>
 
         {/* two-column content */}
