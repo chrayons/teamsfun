@@ -4,7 +4,7 @@ A concept prototype for Microsoft Teams — when you click "Join now", the entir
 
 Life is full of distractions to take you away from the things you don't want to do. This explores the opposite: what if the uncomfortable moment itself became the delight? Instead of escapism, craft.
 
-Built at the [Reve x Design Meetup Makeathon](https://luma.com/ldhaw009).
+Built for the [Reve x Design Meetup Makeathon](https://luma.com/ldhaw009). We won 3rd!
 
 ---
 
@@ -37,7 +37,7 @@ The fold physics are driven by Amanda Ghassaei's [OrigamiSimulator](https://gith
 
 ## Credits
 
-Concept and pitch by [Christina Lu](https://www.christina-lu.com/) and [Ivan Song](https://ivansong.webflow.io/). Prototype built by Christina Lu.
+Concept and pitch by [Christina Lu](https://www.christina-lu.com/) and [Ivan Song](https://ivansong.webflow.io/). Interaction built by Christina Lu.
 
 - Origami fold engine — [Amanda Ghassaei](https://github.com/amandaghassaei/OrigamiSimulator) (MIT license)
 - Built with [Claude Code](https://claude.ai/code)
